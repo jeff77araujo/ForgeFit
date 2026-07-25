@@ -9,9 +9,13 @@ import SwiftUI
 
 @main
 struct ForgeFitApp: App {
+
+    @State private var coordinator = AppCoordinator()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
+                .environment(coordinator)
         }
     }
 }
