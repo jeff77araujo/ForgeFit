@@ -58,6 +58,13 @@ struct SignUpView: View {
         .padding(FFSpacing.lg)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(FFColors.background)
+        .alert("Conta criada!", isPresented: $viewModel.showSuccessAlert) {
+            Button("OK") {
+                viewModel.confirmSuccess()
+            }
+        } message: {
+            Text("Sua conta foi criada com sucesso.")
+        }
     }
 }
 

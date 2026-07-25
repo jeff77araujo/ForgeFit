@@ -16,9 +16,11 @@ final class SignUpViewModel {
     var passwordConfirmation = ""
     var isLoading = false
     var errorMessage: String?
+    var showSuccessAlert = false
     
     private let authService: AuthServiceProtocol
     private let onSignUpSuccess: (User) -> Void
+    private var createdUser: User?
     
     init(authService: AuthServiceProtocol, onSignUpSuccess: @escaping (User) -> Void) {
         self.authService = authService
@@ -39,9 +41,15 @@ final class SignUpViewModel {
         
         do {
             let user = try await authService.signUp(email: email, password: password)
-            onSignUpSuccess(user)
+            createdUser = user
+            showSuccessAlert = true
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+    
+    func confirmSuccess() {
+        guard let createdUser else { return }
+        onSignUpSuccess(createdUser)
     }
 }

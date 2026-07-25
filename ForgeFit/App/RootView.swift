@@ -13,7 +13,7 @@ struct RootView: View {
     private var coordinator
     
     @State private var isAuthenticated = false
-    private let authService: AuthServiceProtocol = MockAuthService()
+    private let authService: AuthServiceProtocol = FirebaseAuthService() // MockAuthService()
     
     var body: some View {
         @Bindable var coordinator = coordinator
@@ -32,6 +32,7 @@ struct RootView: View {
                 switch route {
                 case .signUp:
                     SignUpView(authService: authService) { user in
+                        coordinator.popToRoot()
                         isAuthenticated = true
                     }
                 case .login: Text("Login")
