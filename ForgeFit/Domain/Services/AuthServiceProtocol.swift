@@ -9,6 +9,8 @@ protocol AuthServiceProtocol {
     func login(email: String, password: String) async throws -> User
     func signUp(email: String, password: String) async throws -> User
     func logout() async throws
+    func resetPassword(email: String) async throws
+    func currentUser() -> User?
 }
 
 struct User: Identifiable, Hashable {

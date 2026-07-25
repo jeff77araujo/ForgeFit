@@ -45,6 +45,12 @@ struct LoginView: View {
             }
             .font(FFTypography.caption)
             .foregroundStyle(FFColors.accent)
+            
+            Button("Esqueceu a senha?") {
+                coordinator.goToForgotPassword()
+            }
+            .font(FFTypography.caption)
+            .foregroundStyle(FFColors.textSecondary)
         }
         .padding(FFSpacing.lg)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

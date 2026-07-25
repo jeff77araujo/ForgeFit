@@ -32,6 +32,17 @@ final class MockAuthService: AuthServiceProtocol {
     func logout() async throws {
         try await Task.sleep(for: .milliseconds(300))
     }
+    
+    func resetPassword(email: String) async throws {
+        try await Task.sleep(for: .seconds(1)) // simula latência
+        guard !email.isEmpty else {
+            throw AuthError.invalidCredentials
+        }
+    }
+    
+    func currentUser() -> User? {
+        nil // mock nunca tem sessão persistida
+    }
 }
 
 enum AuthError: LocalizedError {

@@ -14,6 +14,7 @@ enum AppRoute: Hashable {
     case home
     case profile
     case workout
+    case forgotPassword
 }
 
 @MainActor
@@ -49,5 +50,9 @@ final class AppCoordinator {
     
     func popToRoot() {
         path.removeAll()
+    }
+    
+    func goToForgotPassword() {
+        path.append(.forgotPassword)
     }
 }
