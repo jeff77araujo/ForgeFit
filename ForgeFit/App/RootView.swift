@@ -14,14 +14,15 @@ struct RootView: View {
     
     @State private var isAuthenticated = false
     private let authService: AuthServiceProtocol = FirebaseAuthService()
+    private let userRepository: UserRepositoryProtocol = FirestoreUserRepository()
     
     var body: some View {
         @Bindable var coordinator = coordinator
         
         NavigationStack(path: $coordinator.path) {
             Group {
-                if isAuthenticated {
-                    homePlaceholder
+                if isAuthenticated, let userId = authService.currentUser()?.id {
+                    MainTabView(userRepository: userRepository, userId: userId)
                 } else {
                     LoginView(authService: authService) { user in
                         isAuthenticated = true
@@ -30,12 +31,8 @@ struct RootView: View {
             }
             .navigationDestination(for: AppRoute.self) { route in
                 switch route {
-                case .login: Text("Login")
-                case .home: Text("Home")
-                case .profile: Text("Profile")
-                case .workout: Text("Workout")
                 case .signUp:
-                    SignUpView(authService: authService) { user in
+                    SignUpView(authService: authService, userRepository: userRepository) { user in
                         coordinator.popToRoot()
                         isAuthenticated = true
                     }
@@ -47,23 +44,5 @@ struct RootView: View {
         .task {
             isAuthenticated = authService.currentUser() != nil
         }
-    }
-    
-    private var homePlaceholder: some View {
-        VStack(spacing: FFSpacing.md) {
-            Text("Home")
-                .font(FFTypography.largeTitle)
-                .foregroundStyle(FFColors.textPrimary)
-            
-            FFButton(title: "Sair", style: .secondary) {
-                Task {
-                    try? await authService.logout()
-                    isAuthenticated = false
-                }
-            }
-        }
-        .padding(FFSpacing.lg)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(FFColors.background)
     }
 }

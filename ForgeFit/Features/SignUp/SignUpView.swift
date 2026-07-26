@@ -11,12 +11,17 @@ struct SignUpView: View {
     
     @State private var viewModel: SignUpViewModel
     
-    init(authService: AuthServiceProtocol, onSignUpSuccess: @escaping (User) -> Void) {
-        _viewModel = State(wrappedValue: SignUpViewModel(
-            authService: authService,
-            onSignUpSuccess: onSignUpSuccess
-        ))
-    }
+    init(
+            authService: AuthServiceProtocol,
+            userRepository: UserRepositoryProtocol,
+            onSignUpSuccess: @escaping (User) -> Void
+        ) {
+            _viewModel = State(wrappedValue: SignUpViewModel(
+                authService: authService,
+                userRepository: userRepository,
+                onSignUpSuccess: onSignUpSuccess
+            ))
+        }
     
     var body: some View {
         VStack(spacing: FFSpacing.md) {
@@ -69,13 +74,19 @@ struct SignUpView: View {
 }
 
 #Preview("Light") {
-    SignUpView(authService: MockAuthService()) { _ in }
-        .environment(AppCoordinator())
-        .preferredColorScheme(.light)
+    SignUpView(
+        authService: MockAuthService(),
+        userRepository: MockUserRepository()
+    ) { _ in }
+    .environment(AppCoordinator())
+    .preferredColorScheme(.light)
 }
 
 #Preview("Dark") {
-    SignUpView(authService: MockAuthService()) { _ in }
-        .environment(AppCoordinator())
-        .preferredColorScheme(.dark)
+    SignUpView(
+        authService: MockAuthService(),
+        userRepository: MockUserRepository()
+    ) { _ in }
+    .environment(AppCoordinator())
+    .preferredColorScheme(.dark)
 }

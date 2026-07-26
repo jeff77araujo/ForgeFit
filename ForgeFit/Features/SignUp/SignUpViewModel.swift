@@ -19,11 +19,17 @@ final class SignUpViewModel {
     var showSuccessAlert = false
     
     private let authService: AuthServiceProtocol
+    private let userRepository: UserRepositoryProtocol
     private let onSignUpSuccess: (User) -> Void
     private var createdUser: User?
     
-    init(authService: AuthServiceProtocol, onSignUpSuccess: @escaping (User) -> Void) {
+    init(
+        authService: AuthServiceProtocol,
+        userRepository: UserRepositoryProtocol,
+        onSignUpSuccess: @escaping (User) -> Void
+    ) {
         self.authService = authService
+        self.userRepository = userRepository
         self.onSignUpSuccess = onSignUpSuccess
     }
     
@@ -36,11 +42,18 @@ final class SignUpViewModel {
         }
         
         isLoading = true
-        
         defer { isLoading = false }
         
         do {
             let user = try await authService.signUp(email: email, password: password)
+            
+            let profile = UserProfile(
+                id: user.id,
+                name: email.components(separatedBy: "@").first ?? "Usuário"
+            )
+            
+            try await userRepository.createProfile(profile)
+            
             createdUser = user
             showSuccessAlert = true
         } catch {

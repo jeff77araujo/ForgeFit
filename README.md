@@ -37,11 +37,19 @@ ForgeFit
 
 ## 🧭 Navegação (Coordinator Pattern)
 
+### Fluxo de autenticação (`AppCoordinator`)
+
 - `AppCoordinator`: `@MainActor` `@Observable`, guarda um `path: [AppRoute]` (array tipado, escolhido no lugar de `NavigationPath` por dar type-safety e facilitar testes)
-- `AppRoute`: enum com as rotas empilháveis (`login`, `home`, `profile`, `workout`, `signUp`, `forgotPassword`)
-- Login/SignUp → Home usa uma flag simples (`isAuthenticated`) no `RootView`, pois é uma troca de contexto raiz (sem "voltar")
+- `AppRoute`: enum enxuto, só com as rotas do fluxo de auth (`signUp`, `forgotPassword`) — os cases antigos (`home`, `profile`, `workout`) foram removidos depois que a TabView passou a cuidar dessas telas
+- Login/SignUp → Tabs usa uma flag simples (`isAuthenticated`) no `RootView`, pois é uma troca de contexto raiz (sem "voltar")
 - Login → SignUp e Login → ForgotPassword usam o Coordinator de verdade (`goToSignUp()` / `goToForgotPassword()`), pois são telas auxiliares empilhadas (com "voltar")
 - Ao abrir o app, um `.task` no `RootView` chama `authService.currentUser()` pra checar se já existe sessão válida (Firebase mantém isso via Keychain), evitando pedir login de novo toda vez
+
+### Pós-login (`MainTabView` + coordinator por aba)
+
+- `MainTabView`: uma `TabView` com 3 abas (Home, Perfil, Treinos), cada uma com sua própria `NavigationStack`
+- Cada aba tem seu **próprio coordinator e enum de rota** (`HomeCoordinator`/`HomeRoute`, `ProfileCoordinator`/`ProfileRoute`, `WorkoutCoordinator`/`WorkoutRoute`) — evita um `AppRoute` único virando um "enum deus" conforme o app cresce
+- Cada coordinator é `@State` dentro do `MainTabView`, injetado via `.environment(...)` só na `NavigationStack` da própria aba — trocar de aba não reseta o histórico de navegação de cada uma
 
 ---
 
@@ -78,12 +86,23 @@ Paleta **Dark + Ember** (fundo escuro + laranja de destaque, remetendo a "forja"
 
 ---
 
-## 📦 Progresso por sprint
+## 👤 Perfil do usuário (Firestore — Sprint 4 concluída)
+
+- `UserProfile`: modelo `Codable` (nome, foto, data de nascimento, peso/altura, meta de treino via enum `WorkoutGoal`) — `id` é o mesmo `uid` do Firebase Auth, evitando ter dois IDs pra linkar
+- `UserRepositoryProtocol`: contrato (`createProfile`, `fetchProfile`, `updateProfile`) — separado do `AuthServiceProtocol` de propósito, já que autenticação e dados de perfil são responsabilidades diferentes
+- `FirestoreUserRepository`: implementação real, usa `setData(from:)`/`data(as:)` (Codable) pra converter `UserProfile` ↔ documento do Firestore automaticamente, sem montar `[String: Any]` na mão
+- `MockUserRepository`: implementação fake em memória (`[String: UserProfile]`), com `init(seed:)` pra popular dados de teste (essencial pros previews mostrarem algo além de tela em branco)
+- `ProfileViewModel`/`ProfileView`: tela de leitura **e edição** — usa `Binding($viewModel.profile)` pra "desembrulhar" o `UserProfile?` num `Binding` não-opcional pro formulário, com `Binding(get:set:)` manuais pra traduzir `Double?` ↔ `String` nos campos de peso/altura
+- Ao cadastrar uma conta, o `SignUpViewModel` já cria o perfil inicial no Firestore (chama `authService.signUp` e `userRepository.createProfile` em sequência)
+
+**Aprendizados-chave**:
+- Um repository "vazio" (mock sem dados) não é um erro — `fetchProfile` retorna `nil` normalmente. A `ProfileView` precisa tratar esse caso explicitamente (senão a tela fica em branco silenciosamente, sem erro nenhum aparecendo)
+- `@ViewBuilder` é obrigatório em qualquer `var`/função de view que tenha `if`/`switch` sem um tipo de retorno único — o `body` já ganha isso de graça (via protocolo `View`), mas views extraídas em propriedades separadas (como `form` no `ProfileView`) precisam do atributo explícito
 
 - [x] **Sprint 1** — Estrutura inicial, Design System, navegação, Coordinator Pattern, componentes reutilizáveis
 - [x] **Sprint 2** — Swift Concurrency, serviços mockados, MainActor, Observation Framework (fluxo de Login e SignUp completos)
 - [x] **Sprint 3** — Firebase Authentication: login, cadastro, logout, recuperação de senha, sessão persistida (Keychain via Firebase)
-- [ ] **Sprint 4** — Firestore: perfil do usuário, persistência remota, sincronização básica
+- [x] **Sprint 4** — Firestore: perfil do usuário (leitura e edição), persistência remota, sincronização básica + TabView com coordinator por aba (adicional)
 - [ ] **Sprint 5** — CRUD de treinos e exercícios
 - [ ] **Sprint 6** — Execução de treino, registro de séries, repetições e cargas
 - [ ] **Sprint 7** — Timer de descanso, notificações locais, experiência de treino
@@ -99,6 +118,7 @@ Paleta **Dark + Ember** (fundo escuro + laranja de destaque, remetendo a "forja"
 
 - [ ] Revisitar um container de **Dependency Injection** mais estruturado (hoje os serviços são instanciados direto no `RootView`)
 - [ ] Considerar um `enum` de erro dedicado quando as validações locais dos ViewModels crescerem (hoje tudo é `String?`)
+- [ ] Refatorar `SignUpViewModel` para usar um `SignUpUseCase` em vez de depender direto de `AuthServiceProtocol` + `UserRepositoryProtocol` juntos (Single Responsibility)
 
 ---
 
@@ -111,6 +131,8 @@ Paleta **Dark + Ember** (fundo escuro + laranja de destaque, remetendo a "forja"
 | Cores via Asset Catalog (`Color("Nome")`) | Hex hardcoded no código | Dark mode automático, sem `if colorScheme == .dark` espalhado pelo app |
 | Tipografia via `Font.system(.style, ...)` | Tamanho fixo (`size: 34`) | Suporte automático a Dynamic Type (acessibilidade) |
 | `@Environment(\.dismiss)` no ForgotPassword | Closure de callback (padrão do Login/SignUp) | Não existe "próxima tela" após reset — só faz sentido voltar, então o `dismiss` nativo é mais simples |
+| Coordinator + enum de rota por aba | Um `AppRoute` único compartilhado por tudo | Evita um enum gigante conforme o app cresce, e cada aba mantém histórico de navegação independente |
+| `id` do `UserProfile` = `uid` do Firebase Auth | Gerar um ID novo pro documento do Firestore | Busca direta (`users/{uid}`), sem precisar de query extra pra linkar auth com perfil |
 
 ---
 

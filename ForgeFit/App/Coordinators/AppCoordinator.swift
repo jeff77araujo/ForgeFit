@@ -10,10 +10,6 @@ import Observation
 
 enum AppRoute: Hashable {
     case signUp
-    case login
-    case home
-    case profile
-    case workout
     case forgotPassword
 }
 
@@ -25,22 +21,6 @@ final class AppCoordinator {
     
     func goToSignUp() {
         path.append(.signUp)
-    }
-    
-    func goToLogin() {
-        path.append(.login)
-    }
-    
-    func goToHome() {
-        path.append(.home)
-    }
-    
-    func goToProfile() {
-        path.append(.profile)
-    }
-    
-    func goToWorkout() {
-        path.append(.workout)
     }
     
     func pop() {
