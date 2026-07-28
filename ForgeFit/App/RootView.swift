@@ -15,19 +15,31 @@ struct RootView: View {
     @State private var isAuthenticated = false
     private let authService: AuthServiceProtocol = FirebaseAuthService()
     private let userRepository: UserRepositoryProtocol = FirestoreUserRepository()
+    private let workoutRepository: WorkoutRepositoryProtocol = FirestoreWorkoutRepository()
     
     var body: some View {
+        Group {
+            if isAuthenticated, let userId = authService.currentUser()?.id {
+                MainTabView(
+                    userRepository: userRepository,
+                    workoutRepository: workoutRepository,
+                    userId: userId
+                )
+            } else {
+                authFlow
+            }
+        }
+        .task {
+            isAuthenticated = authService.currentUser() != nil
+        }
+    }
+    
+    private var authFlow: some View {
         @Bindable var coordinator = coordinator
         
-        NavigationStack(path: $coordinator.path) {
-            Group {
-                if isAuthenticated, let userId = authService.currentUser()?.id {
-                    MainTabView(userRepository: userRepository, userId: userId)
-                } else {
-                    LoginView(authService: authService) { user in
-                        isAuthenticated = true
-                    }
-                }
+        return NavigationStack(path: $coordinator.path) {
+            LoginView(authService: authService) { user in
+                isAuthenticated = true
             }
             .navigationDestination(for: AppRoute.self) { route in
                 switch route {
@@ -40,9 +52,6 @@ struct RootView: View {
                     ForgotPasswordView(authService: authService)
                 }
             }
-        }
-        .task {
-            isAuthenticated = authService.currentUser() != nil
         }
     }
 }

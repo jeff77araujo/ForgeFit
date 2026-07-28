@@ -8,7 +8,7 @@
 import Foundation
 
 enum HomeRoute: Hashable {
-    case detail(String) // placeholder, cresce quando Home tiver conteúdo real
+    case detail(String) // placeholder, cresce quando a Home tiver conteúdo real (Sprint 8)
 }
 
 @MainActor

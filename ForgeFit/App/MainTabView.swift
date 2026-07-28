@@ -14,6 +14,7 @@ struct MainTabView: View {
     @State private var workoutCoordinator = WorkoutCoordinator()
     
     let userRepository: UserRepositoryProtocol
+    let workoutRepository: WorkoutRepositoryProtocol
     let userId: String
     
     var body: some View {
@@ -34,7 +35,7 @@ struct MainTabView: View {
         @Bindable var homeCoordinator = homeCoordinator
         
         return NavigationStack(path: $homeCoordinator.path) {
-            Text("Home") // placeholder até existir HomeView de verdade
+            HomeView()
                 .navigationDestination(for: HomeRoute.self) { route in
                     switch route {
                     case .detail(let id):
@@ -43,6 +44,23 @@ struct MainTabView: View {
                 }
         }
         .environment(homeCoordinator)
+    }
+    
+    private var workoutTab: some View {
+        @Bindable var workoutCoordinator = workoutCoordinator
+        
+        return NavigationStack(path: $workoutCoordinator.path) {
+            WorkoutListView(workoutRepository: workoutRepository, userId: userId)
+                .navigationDestination(for: WorkoutRoute.self) { route in
+                    switch route {
+                    case .createWorkout:
+                        CreateWorkoutView(workoutRepository: workoutRepository, userId: userId)
+                    case .editWorkout(let workout):
+                        CreateWorkoutView(workoutRepository: workoutRepository, userId: userId, editing: workout)
+                    }
+                }
+        }
+        .environment(workoutCoordinator)
     }
     
     private var profileTab: some View {
@@ -58,20 +76,5 @@ struct MainTabView: View {
                 }
         }
         .environment(profileCoordinator)
-    }
-    
-    private var workoutTab: some View {
-        @Bindable var workoutCoordinator = workoutCoordinator
-        
-        return NavigationStack(path: $workoutCoordinator.path) {
-            Text("Treinos") // placeholder até a Sprint 5
-                .navigationDestination(for: WorkoutRoute.self) { route in
-                    switch route {
-                    case .detail(let id):
-                        Text("Detalhe do treino: \(id)")
-                    }
-                }
-        }
-        .environment(workoutCoordinator)
     }
 }
