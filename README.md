@@ -99,11 +99,32 @@ Paleta **Dark + Ember** (fundo escuro + laranja de destaque, remetendo a "forja"
 - Um repository "vazio" (mock sem dados) não é um erro — `fetchProfile` retorna `nil` normalmente. A `ProfileView` precisa tratar esse caso explicitamente (senão a tela fica em branco silenciosamente, sem erro nenhum aparecendo)
 - `@ViewBuilder` é obrigatório em qualquer `var`/função de view que tenha `if`/`switch` sem um tipo de retorno único — o `body` já ganha isso de graça (via protocolo `View`), mas views extraídas em propriedades separadas (como `form` no `ProfileView`) precisam do atributo explícito
 
+---
+
+## 🏋️ Treinos (CRUD — Sprint 5 concluída)
+
+- `Workout`/`Exercise`/`PlannedSet`: modelagem em camadas — um `Workout` é um **molde reutilizável** (ex: "Treino A - Peito"), não uma sessão executada; isso separa "o que está planejado" de "o que aconteceu de fato" (conceito que volta na Sprint 6 com execução real)
+- `id` de `Workout`/`Exercise`/`PlannedSet` gerado com `UUID().uuidString` (diferente do `UserProfile`, que reaproveitava o `uid` do Auth — aqui não existe identidade natural pra reaproveitar)
+- `WorkoutRepositoryProtocol`: CRUD completo (`create`, `fetch` retornando array — 1 usuário tem N treinos —, `update`, `delete`)
+- `FirestoreWorkoutRepository`: primeira **query** real do projeto (`whereField` + `order`), exigiu criar um **índice composto** no Firestore
+- Lista de treinos mora na aba **Treinos** (`WorkoutListView`/`WorkoutCoordinator`), não na Home — Home é reservada para um dashboard/resumo futuro (Sprint 8)
+- Lista usa `List` (não `ScrollView`) com `DisclosureGroup` por treino (expande mostrando os exercícios) e `.swipeActions` com **dois** botões (Excluir + Editar)
+- `CreateWorkoutView` serve tanto para criar quanto editar (mesmo ViewModel, `existingWorkout: Workout?` no `init` decide o modo) — usa `ForEach` com bindings aninhados (`ForEach($viewModel.exercises)`, e dentro `ForEach(exercise.sets)`) para editar arrays em todos os níveis sem código manual de índice
+
+**Aprendizados-chave**:
+- **Índice composto do Firestore**: sempre que uma query combina `whereField` (filtro) com `order(by:)` num campo diferente, o Firestore exige um índice específico para essa combinação — sem ele, a query falha com um erro que já vem com o link pronto pra criar o índice no Console
+- **`.swipeActions` só funciona dentro de `List`** (não em `ScrollView` + `VStack`) — migrar exigiu `.listRowBackground(.clear)`, `.listRowSeparator(.hidden)` e `.scrollContentBackground(.hidden)` para o visual não conflitar com os componentes do Design System
+- **`NavigationStack` aninhado é um bug silencioso**: colocar uma `TabView` (com `NavigationStack` próprio em cada aba) dentro de outro `NavigationStack` externo faz `.navigationTitle`/`.toolbar` da stack interna serem ignorados, sem nenhum erro — a correção foi restringir o `NavigationStack` externo só ao fluxo de autenticação
+
+---
+
+## 📦 Progresso por sprint
+
 - [x] **Sprint 1** — Estrutura inicial, Design System, navegação, Coordinator Pattern, componentes reutilizáveis
 - [x] **Sprint 2** — Swift Concurrency, serviços mockados, MainActor, Observation Framework (fluxo de Login e SignUp completos)
 - [x] **Sprint 3** — Firebase Authentication: login, cadastro, logout, recuperação de senha, sessão persistida (Keychain via Firebase)
 - [x] **Sprint 4** — Firestore: perfil do usuário (leitura e edição), persistência remota, sincronização básica + TabView com coordinator por aba (adicional)
-- [ ] **Sprint 5** — CRUD de treinos e exercícios
+- [x] **Sprint 5** — CRUD de treinos e exercícios (criar, listar/expandir, editar, excluir)
 - [ ] **Sprint 6** — Execução de treino, registro de séries, repetições e cargas
 - [ ] **Sprint 7** — Timer de descanso, notificações locais, experiência de treino
 - [ ] **Sprint 8** — Swift Charts, dashboard, evolução física
@@ -133,6 +154,8 @@ Paleta **Dark + Ember** (fundo escuro + laranja de destaque, remetendo a "forja"
 | `@Environment(\.dismiss)` no ForgotPassword | Closure de callback (padrão do Login/SignUp) | Não existe "próxima tela" após reset — só faz sentido voltar, então o `dismiss` nativo é mais simples |
 | Coordinator + enum de rota por aba | Um `AppRoute` único compartilhado por tudo | Evita um enum gigante conforme o app cresce, e cada aba mantém histórico de navegação independente |
 | `id` do `UserProfile` = `uid` do Firebase Auth | Gerar um ID novo pro documento do Firestore | Busca direta (`users/{uid}`), sem precisar de query extra pra linkar auth com perfil |
+| `Workout` como molde reutilizável | Treino = sessão única já na Sprint 5 | Reflete como o usuário pensa na prática (reusa o treino, não recria toda vez) e prepara terreno pra separar planejado x executado na Sprint 6 |
+| Lista de treinos na aba Treinos, não na Home | Deixar a lista onde foi criada primeiro (Home) | Home fica reservada para um dashboard/resumo (Sprint 8); Treinos é o nome que já sinalizava esse propósito |
 
 ---
 
