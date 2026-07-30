@@ -15,6 +15,7 @@ struct MainTabView: View {
     
     let userRepository: UserRepositoryProtocol
     let workoutRepository: WorkoutRepositoryProtocol
+    let sessionRepository: WorkoutSessionRepositoryProtocol
     let userId: String
     
     var body: some View {
@@ -35,7 +36,7 @@ struct MainTabView: View {
         @Bindable var homeCoordinator = homeCoordinator
         
         return NavigationStack(path: $homeCoordinator.path) {
-            HomeView()
+            HomeView(sessionRepository: sessionRepository, userId: userId)
                 .navigationDestination(for: HomeRoute.self) { route in
                     switch route {
                     case .detail(let id):
@@ -54,9 +55,22 @@ struct MainTabView: View {
                 .navigationDestination(for: WorkoutRoute.self) { route in
                     switch route {
                     case .createWorkout:
-                        CreateWorkoutView(workoutRepository: workoutRepository, userId: userId)
+                        CreateWorkoutView(
+                            workoutRepository: workoutRepository,
+                            userId: userId
+                        )
                     case .editWorkout(let workout):
-                        CreateWorkoutView(workoutRepository: workoutRepository, userId: userId, editing: workout)
+                        CreateWorkoutView(
+                            workoutRepository: workoutRepository,
+                            userId: userId,
+                            editing: workout
+                        )
+                    case .startSession(let workout):
+                        WorkoutSessionView(
+                            workout: workout,
+                            userId: userId,
+                            sessionRepository: sessionRepository
+                        )
                     }
                 }
         }

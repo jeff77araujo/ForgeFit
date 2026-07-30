@@ -118,6 +118,22 @@ Paleta **Dark + Ember** (fundo escuro + laranja de destaque, remetendo a "forja"
 
 ---
 
+## ✅ Execução de treino (Sprint 6 concluída)
+
+- `WorkoutSession`/`CompletedExercise`/`CompletedSet`: modelo separado do `Workout` (molde) — representa o que **de fato aconteceu** num dia de treino, podendo divergir do planejado
+- `workoutId` + `workoutName` guardados juntos na sessão: `workoutId` referencia o molde original, mas `workoutName` é uma cópia — assim, editar/deletar o `Workout` depois não quebra o histórico de sessões antigas
+- Ao iniciar uma sessão, o `WorkoutSessionViewModel` **clona** os dados do `Workout` (reps/peso planejados como sugestão inicial, `isDone: false` em cada série) — usuário só ajusta o que mudou durante o treino
+- `WorkoutSessionRepositoryProtocol` não tem `delete` (intencional — sessão já executada é histórico, não algo que normalmente se apaga)
+- `WorkoutSessionView`: séries agrupadas por exercício com `Section`, checkbox por série (toggle via ViewModel, não binding direto — é uma ação de negócio), botão "Finalizar treino" fixo na tela com `.safeAreaInset(edge: .bottom)`
+- Histórico de sessões finalizadas vive na aba **Home** (que assume de vez o papel de dashboard/resumo)
+
+**Aprendizados-chave**:
+- `.safeAreaInset(edge: .bottom)` fixa uma view na parte de baixo da tela, sempre visível mesmo com o conteúdo acima rolando — padrão comum para ações principais (ex: "Finalizar", "Continuar") que não deveriam exigir rolar até o fim para encontrar
+- `.formatted(date:time:)` formata datas de forma moderna e localizada automaticamente (sem `DateFormatter` manual), respeitando o idioma/região do dispositivo
+- Uma ação com significado de negócio (marcar série como concluída) fica melhor como método no ViewModel do que como binding direto na View — mesmo sendo "só um toggle", deixa a intenção explícita e testável
+
+---
+
 ## 📦 Progresso por sprint
 
 - [x] **Sprint 1** — Estrutura inicial, Design System, navegação, Coordinator Pattern, componentes reutilizáveis
@@ -125,7 +141,7 @@ Paleta **Dark + Ember** (fundo escuro + laranja de destaque, remetendo a "forja"
 - [x] **Sprint 3** — Firebase Authentication: login, cadastro, logout, recuperação de senha, sessão persistida (Keychain via Firebase)
 - [x] **Sprint 4** — Firestore: perfil do usuário (leitura e edição), persistência remota, sincronização básica + TabView com coordinator por aba (adicional)
 - [x] **Sprint 5** — CRUD de treinos e exercícios (criar, listar/expandir, editar, excluir)
-- [ ] **Sprint 6** — Execução de treino, registro de séries, repetições e cargas
+- [x] **Sprint 6** — Execução de treino, registro de séries/reps/cargas, histórico de sessões
 - [ ] **Sprint 7** — Timer de descanso, notificações locais, experiência de treino
 - [ ] **Sprint 8** — Swift Charts, dashboard, evolução física
 - [ ] **Sprint 9** — SwiftData e cache offline
@@ -156,6 +172,8 @@ Paleta **Dark + Ember** (fundo escuro + laranja de destaque, remetendo a "forja"
 | `id` do `UserProfile` = `uid` do Firebase Auth | Gerar um ID novo pro documento do Firestore | Busca direta (`users/{uid}`), sem precisar de query extra pra linkar auth com perfil |
 | `Workout` como molde reutilizável | Treino = sessão única já na Sprint 5 | Reflete como o usuário pensa na prática (reusa o treino, não recria toda vez) e prepara terreno pra separar planejado x executado na Sprint 6 |
 | Lista de treinos na aba Treinos, não na Home | Deixar a lista onde foi criada primeiro (Home) | Home fica reservada para um dashboard/resumo (Sprint 8); Treinos é o nome que já sinalizava esse propósito |
+| `WorkoutSession` separado de `Workout` | Um único modelo servindo de molde e execução | Permite divergir do planejado (peso/reps reais) sem afetar o molde, e mantém histórico íntegro mesmo se o molde for editado/apagado |
+| Clonar dados do `Workout` ao iniciar sessão | Começar a sessão vazia, sem sugestão | Reduz fricção — usuário só ajusta o que mudou, em vez de digitar tudo de novo |
 
 ---
 

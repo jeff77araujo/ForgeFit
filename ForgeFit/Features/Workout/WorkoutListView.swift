@@ -65,6 +65,13 @@ struct WorkoutListView: View {
                             .foregroundStyle(FFColors.textSecondary)
                             .padding(.leading, FFSpacing.sm)
                     }
+                    
+                    Button("Iniciar treino") {
+                        coordinator.goToStartSession(workout)
+                    }
+                    .font(FFTypography.caption)
+                    .foregroundStyle(FFColors.accent)
+                    .padding(.top, FFSpacing.xs)
                 } label: {
                     VStack(alignment: .leading, spacing: FFSpacing.xxs) {
                         Text(workout.name)

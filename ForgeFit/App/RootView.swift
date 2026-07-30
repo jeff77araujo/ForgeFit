@@ -16,6 +16,7 @@ struct RootView: View {
     private let authService: AuthServiceProtocol = FirebaseAuthService()
     private let userRepository: UserRepositoryProtocol = FirestoreUserRepository()
     private let workoutRepository: WorkoutRepositoryProtocol = FirestoreWorkoutRepository()
+    private let sessionRepository: WorkoutSessionRepositoryProtocol = FirestoreWorkoutSessionRepository()
     
     var body: some View {
         Group {
@@ -23,6 +24,7 @@ struct RootView: View {
                 MainTabView(
                     userRepository: userRepository,
                     workoutRepository: workoutRepository,
+                    sessionRepository: sessionRepository,
                     userId: userId
                 )
             } else {

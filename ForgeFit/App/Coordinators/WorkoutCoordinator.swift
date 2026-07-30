@@ -10,6 +10,7 @@ import Foundation
 enum WorkoutRoute: Hashable {
     case createWorkout
     case editWorkout(Workout)
+    case startSession(Workout)
 }
 
 @MainActor
@@ -23,5 +24,9 @@ final class WorkoutCoordinator {
     
     func goToEditWorkout(_ workout: Workout) {
         path.append(.editWorkout(workout))
+    }
+    
+    func goToStartSession(_ workout: Workout) {
+        path.append(.startSession(workout))
     }
 }
